@@ -1,3 +1,4 @@
+#include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,7 +6,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "shl_debug.h"
 #include "shl_types.h"
 #include "shl_cli.h"
 #include "shl_string.h"
@@ -30,37 +30,10 @@ _Bool shl_is_echo_command(struct shl_Lines* args)
 	return false;
 }
 
-int shl_echo_command(struct shl_Lines* args)
+uint_fast32_t shl_echo_command(struct shl_Lines* args)
 {
 	for (uint_fast32_t i = 1; i < args->count; i++)
 		printf("%s\n", args->lines[i]);
-
-	return 1;
-}
-
-uint_fast32_t shl_launch_process(struct shl_Lines* args)
-{
-	shl_debug_args(args);
-	// pid_t pid;
-	// int status;
-	//
-	// pid = fork();
-	// if (pid == 0)
-	// {
-	// 	if (execvp(args.lines[0], args.lines))
-	// 		perror("shl");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// else if (pid < 0)
-	// {
-	// 	perror("shl");
-	// }
-	// else
-	// {
-	// 	do {
-	// 		waitpid(pid, &status, WUNTRACED);
-	// 	}while (!WIFEXITED(status) && !WIFSIGNALED(status));
-	// }
 
 	return 1;
 }
@@ -73,7 +46,66 @@ _Bool shl_is_help_command(struct shl_Lines* args)
 	return false;
 }
 
-int shl_execute_command(struct shl_Lines* args)
+uint_fast32_t shl_help_command(void)
+{
+	printf("conch-shell by Alex Eski: help\n");
+
+	printf("To exit, type q, exit, or quit.\n");
+
+	return 1;
+}
+
+_Bool shl_is_cd_command(struct shl_Lines* args)
+{
+	if (shl_string_compare(args->lines[0], "cd", args->maxLineSize) == 0)
+		return true;
+	
+	return false;
+}
+
+uint_fast32_t shl_cd_command(struct shl_Lines* args)
+{
+	if (args->lines[1] == NULL)
+	{
+		fprintf(stderr, "shl: no arguments to cd.\n");
+		return 1;
+	}
+
+	if (chdir(args->lines[1]) != 0)
+		fprintf(stderr, "shl: could not change directory.\n");
+
+	return 1;
+}
+
+uint_fast32_t shl_launch_process(struct shl_Lines* args)
+{
+	pid_t pid;
+	pid_t wait_pid;
+	int status;
+
+	pid = fork();
+	if (pid == 0)
+	{
+		if (execvp(args->lines[0], args->lines))
+			perror("shl");
+		exit(EXIT_FAILURE);
+	}
+	else if (pid < 0)
+	{
+		perror("shl");
+	}
+	else
+	{
+		do {
+			wait_pid = waitpid(pid, &status, WUNTRACED);
+			printf("%d\n", wait_pid);
+		}while (!WIFEXITED(status) && !WIFSIGNALED(status));
+	}
+
+	return 1;
+}
+
+uint_fast32_t shl_execute_command(struct shl_Lines* args)
 {
 	if (shl_is_exit_command(args))
 		return 0;
@@ -82,7 +114,10 @@ int shl_execute_command(struct shl_Lines* args)
 		return shl_echo_command(args);
 
 	if (shl_is_help_command(args))
-		return 0;
+		return shl_help_command();
+
+	if (shl_is_cd_command(args))
+		return shl_cd_command(args);
 
 	return shl_launch_process(args);
 }
@@ -92,15 +127,17 @@ int main (void)
 	uint_fast32_t status = 1;
 	struct shl_Line line;
 	struct shl_Lines args;
+	char directory[PATH_MAX];
 
 	do {
-		printf("> ");
+		getcwd(directory, sizeof(directory));
+
+		printf("%s> ", directory);
 		line = shl_read_line();
 		if (!shl_is_valid_line(&line))
 		{
 			continue;
 		}
-		// shl_debug_line(line);
 
 		args = shl_split_line(&line);
 		if (!shl_is_valid_args(&args))
@@ -108,7 +145,6 @@ int main (void)
 			printf("Invalid arguments.\n");
 			continue;
 		}
-		// shl_debug_args(args);
 
 		status = shl_execute_command(&args);
 
