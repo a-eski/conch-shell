@@ -1,4 +1,3 @@
-#include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,40 +15,40 @@
 	#include "shl_debug.h"
 #endif
 
-_Bool shl_is_exit_command(struct shl_Lines* args)
+_Bool shl_is_exit_command(struct shl_Lines args)
 {
-	if (shl_string_compare(args->lines[0], "q", args->maxLineSize) == 0)
+	if (shl_string_compare(args.lines[0], "q", args.maxLineSize) == 0)
 		return true;
-	if (shl_string_compare(args->lines[0], "exit", args->maxLineSize) == 0)
+	if (shl_string_compare(args.lines[0], "exit", args.maxLineSize) == 0)
 		return true;
-	if (shl_string_compare(args->lines[0], "quit", args->maxLineSize) == 0)
+	if (shl_string_compare(args.lines[0], "quit", args.maxLineSize) == 0)
 		return true;
 
 	return false;
 }
 
-_Bool shl_is_echo_command(struct shl_Lines* args)
+_Bool shl_is_echo_command(struct shl_Lines args)
 {
-	if (shl_string_compare(args->lines[0], "echo", args->maxLineSize) == 0)
+	if (shl_string_compare(args.lines[0], "echo", args.maxLineSize) == 0)
 		return true;
 	
 	return false;
 }
 
-uint_fast32_t shl_echo_command(struct shl_Lines* args)
+uint_fast32_t shl_echo_command(struct shl_Lines args)
 {
-	for (uint_fast32_t i = 1; i < args->count; i++)
-		printf("%s ", args->lines[i]);
+	for (uint_fast32_t i = 1; i < args.count; i++)
+		printf("%s ", args.lines[i]);
 
-	if (args->count > 0)
+	if (args.count > 0)
 		printf("\n");
 
 	return 1;
 }
 
-_Bool shl_is_help_command(struct shl_Lines* args)
+_Bool shl_is_help_command(struct shl_Lines args)
 {
-	if (shl_string_compare(args->lines[0], "help", args->maxLineSize) == 0)
+	if (shl_string_compare(args.lines[0], "help", args.maxLineSize) == 0)
 		return true;
 	
 	return false;
@@ -64,29 +63,29 @@ uint_fast32_t shl_help_command(void)
 	return 1;
 }
 
-_Bool shl_is_cd_command(struct shl_Lines* args)
+_Bool shl_is_cd_command(struct shl_Lines args)
 {
-	if (shl_string_compare(args->lines[0], "cd", args->maxLineSize) == 0)
+	if (shl_string_compare(args.lines[0], "cd", args.maxLineSize) == 0)
 		return true;
 	
 	return false;
 }
 
-uint_fast32_t shl_cd_command(struct shl_Lines* args)
+uint_fast32_t shl_cd_command(struct shl_Lines args)
 {
-	if (args->lines[1] == NULL)
+	if (args.lines[1] == NULL)
 	{
 		fprintf(stderr, "shl: no arguments to cd.\n");
 		return 1;
 	}
 
-	if (chdir(args->lines[1]) != 0)
+	if (chdir(args.lines[1]) != 0)
 		fprintf(stderr, "shl: could not change directory.\n");
 
 	return 1;
 }
 
-uint_fast32_t shl_launch_process(struct shl_Lines* args)
+uint_fast32_t shl_launch_process(struct shl_Lines args)
 {
 	#if shl_DEBUG
 		shl_debug_launch_process(args);
@@ -98,7 +97,7 @@ uint_fast32_t shl_launch_process(struct shl_Lines* args)
 	pid = fork();
 	if (pid == 0)
 	{
-		int exec_result = execvp(args->lines[0], args->lines);
+		int exec_result = execvp(args.lines[0], args.lines);
 		if (exec_result == -1)
 			perror(RED "conch-shell: error when creating child process" RESET);
 		exit(EXIT_FAILURE);
@@ -117,7 +116,7 @@ uint_fast32_t shl_launch_process(struct shl_Lines* args)
 	return 1;
 }
 
-uint_fast32_t shl_execute_command(struct shl_Lines* args)
+uint_fast32_t shl_execute_command(struct shl_Lines args)
 {
 	if (shl_is_exit_command(args))
 		return 0;
@@ -134,16 +133,6 @@ uint_fast32_t shl_execute_command(struct shl_Lines* args)
 	return shl_launch_process(args);
 }
 
-struct shl_Directory
-{
-	char path[PATH_MAX];
-};
-
-void shl_set_directory(struct shl_Directory* directory)
-{
-	getcwd(directory->path, sizeof(directory->path));
-}
-
 int main (void)
 {
 	uint_fast32_t status = 1;
@@ -156,19 +145,19 @@ int main (void)
 		printf(CYAN "%s" RESET GREEN "$ " RESET, directory.path);
 
 		line = shl_read_line();
-		if (!shl_is_valid_line(&line))
+		if (!shl_is_valid_line(line))
 		{
 			continue;
 		}
 
-		args = shl_split_line(&line);
-		if (!shl_is_valid_args(&args))
+		args = shl_split_line(line);
+		if (!shl_is_valid_args(args))
 		{
 			printf("Invalid arguments.\n");
 			continue;
 		}
 
-		status = shl_execute_command(&args);
+		status = shl_execute_command(args);
 
 		free(line.line);
 		for (uint_fast32_t i = 0; i < args.count; i++)
