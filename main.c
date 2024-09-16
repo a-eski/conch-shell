@@ -11,7 +11,7 @@
 #include "shl_string.h"
 #include "shl_output.h"
 
-#define shl_DEBUG true
+#define shl_DEBUG false
 #if shl_DEBUG
 	#include "shl_debug.h"
 #endif
@@ -88,7 +88,7 @@ uint_fast32_t shl_cd_command(struct shl_Lines* args)
 
 uint_fast32_t shl_launch_process(struct shl_Lines* args)
 {
-	#ifdef shl_DEBUG
+	#if shl_DEBUG
 		shl_debug_launch_process(args);
 	#endif /* ifdef shl_DEBUG */
 
