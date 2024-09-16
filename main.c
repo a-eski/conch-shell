@@ -11,6 +11,11 @@
 #include "shl_string.h"
 #include "shl_output.h"
 
+#define shl_DEBUG true
+#if shl_DEBUG
+	#include "shl_debug.h"
+#endif
+
 _Bool shl_is_exit_command(struct shl_Lines* args)
 {
 	if (shl_string_compare(args->lines[0], "q", args->maxLineSize) == 0)
@@ -83,6 +88,10 @@ uint_fast32_t shl_cd_command(struct shl_Lines* args)
 
 uint_fast32_t shl_launch_process(struct shl_Lines* args)
 {
+	#ifdef shl_DEBUG
+		shl_debug_launch_process(args);
+	#endif /* ifdef shl_DEBUG */
+
 	pid_t pid;
 	int status;
 
