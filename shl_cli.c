@@ -72,18 +72,18 @@ struct shl_Line shl_read_line(void)
 	}
 }
 
-_Bool shl_is_valid_line(struct shl_Line* line)
+_Bool shl_is_valid_line(struct shl_Line line)
 {
-	if (line->length == 1)
+	if (line.length == 1)
 		return false;
 
-	if (line->line == NULL)
+	if (line.line == NULL)
 		return false;
 	
 	return true;
 }
 
-struct shl_Lines shl_split_line(struct shl_Line* line)
+struct shl_Lines shl_split_line(struct shl_Line line)
 {
 	if (!shl_is_valid_line(line))
 	{
@@ -104,13 +104,13 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 
 	uint_fast32_t doubleQuotesCount = 0;
 
-	for (uint_fast32_t linePosition = 0; linePosition < line->length + 1; linePosition++)
+	for (uint_fast32_t linePosition = 0; linePosition < line.length + 1; linePosition++)
 	{
-		if (linePosition == line->length)
+		if (linePosition == line.length)
 		{
 			splitLines.lines[splitLines.count] = NULL;
 		}
-		else if (shl_is_delimiter(line->line[linePosition]) && (doubleQuotesCount == 0 || doubleQuotesCount == 2))
+		else if (shl_is_delimiter(line.line[linePosition]) && (doubleQuotesCount == 0 || doubleQuotesCount == 2))
 		{
 			buffer[bufferPosition] = '\0';
 
@@ -143,10 +143,10 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 					exit(-1);
 			}
 			
-			if (line->line[linePosition] == '\"')
+			if (line.line[linePosition] == '\"')
 				doubleQuotesCount++;
 
-			buffer[bufferPosition++] = line->line[linePosition];
+			buffer[bufferPosition++] = line.line[linePosition];
 		}
 	}
 
@@ -154,9 +154,9 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 	return splitLines;
 }
 
-_Bool shl_is_valid_args(struct shl_Lines* args)
+_Bool shl_is_valid_args(struct shl_Lines args)
 {
-	if (args->count == 0 || args->lines == NULL)
+	if (args.count == 0 || args.lines == NULL)
 		return 0;
 
 	return 1;
