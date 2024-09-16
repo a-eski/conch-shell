@@ -9,6 +9,7 @@
 #include "shl_types.h"
 #include "shl_cli.h"
 #include "shl_string.h"
+#include "shl_output.h"
 
 _Bool shl_is_exit_command(struct shl_Lines* args)
 {
@@ -33,7 +34,10 @@ _Bool shl_is_echo_command(struct shl_Lines* args)
 uint_fast32_t shl_echo_command(struct shl_Lines* args)
 {
 	for (uint_fast32_t i = 1; i < args->count; i++)
-		printf("%s\n", args->lines[i]);
+		printf("%s ", args->lines[i]);
+
+	if (args->count > 0)
+		printf("\n");
 
 	return 1;
 }
@@ -80,25 +84,24 @@ uint_fast32_t shl_cd_command(struct shl_Lines* args)
 uint_fast32_t shl_launch_process(struct shl_Lines* args)
 {
 	pid_t pid;
-	pid_t wait_pid;
 	int status;
 
 	pid = fork();
 	if (pid == 0)
 	{
-		if (execvp(args->lines[0], args->lines))
-			perror("shl");
+		int exec_result = execvp(args->lines[0], args->lines);
+		if (exec_result == -1)
+			perror(RED "conch-shell: error when creating child process" RESET);
 		exit(EXIT_FAILURE);
 	}
 	else if (pid < 0)
 	{
-		perror("shl");
+		perror(RED "conch-shell: error when forking process" RESET);
 	}
 	else
 	{
 		do {
-			wait_pid = waitpid(pid, &status, WUNTRACED);
-			printf("%d\n", wait_pid);
+			waitpid(pid, &status, WUNTRACED);
 		}while (!WIFEXITED(status) && !WIFSIGNALED(status));
 	}
 
@@ -122,17 +125,27 @@ uint_fast32_t shl_execute_command(struct shl_Lines* args)
 	return shl_launch_process(args);
 }
 
+struct shl_Directory
+{
+	char path[PATH_MAX];
+};
+
+void shl_set_directory(struct shl_Directory* directory)
+{
+	getcwd(directory->path, sizeof(directory->path));
+}
+
 int main (void)
 {
 	uint_fast32_t status = 1;
 	struct shl_Line line;
 	struct shl_Lines args;
-	char directory[PATH_MAX];
+	struct shl_Directory directory;
 
 	do {
-		getcwd(directory, sizeof(directory));
+		getcwd(directory.path, sizeof(directory.path));
+		printf(CYAN "%s" RESET GREEN "$ " RESET, directory.path);
 
-		printf("%s> ", directory);
 		line = shl_read_line();
 		if (!shl_is_valid_line(&line))
 		{

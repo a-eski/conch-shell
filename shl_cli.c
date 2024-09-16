@@ -100,9 +100,13 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 	if (splitLines.lines == NULL)
 		exit(-1);
 
-	for (uint_fast32_t linePosition = 0; linePosition < line->length; linePosition++)
+	for (uint_fast32_t linePosition = 0; linePosition < line->length + 1; linePosition++)
 	{
-		if (shl_is_delimiter(line->line[linePosition]))
+		if (linePosition == line->length)
+		{
+			splitLines.lines[splitLines.count] = NULL;
+		}
+		else if (shl_is_delimiter(line->line[linePosition]))
 		{
 			buffer[bufferPosition] = '\0';
 
