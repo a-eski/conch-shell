@@ -145,8 +145,8 @@ struct shl_Lines shl_split_line(struct shl_Line line)
 			
 			if (line.line[linePosition] == '\"')
 				doubleQuotesCount++;
-
-			buffer[bufferPosition++] = line.line[linePosition];
+			else	
+				buffer[bufferPosition++] = line.line[linePosition];
 		}
 	}
 
