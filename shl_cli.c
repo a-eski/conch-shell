@@ -1,5 +1,7 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
 
 #include "shl_string.h"
 #include "shl_cli.h"
@@ -100,13 +102,15 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 	if (splitLines.lines == NULL)
 		exit(-1);
 
+	uint_fast32_t doubleQuotesCount = 0;
+
 	for (uint_fast32_t linePosition = 0; linePosition < line->length + 1; linePosition++)
 	{
 		if (linePosition == line->length)
 		{
 			splitLines.lines[splitLines.count] = NULL;
 		}
-		else if (shl_is_delimiter(line->line[linePosition]))
+		else if (shl_is_delimiter(line->line[linePosition]) && (doubleQuotesCount == 0 || doubleQuotesCount == 2))
 		{
 			buffer[bufferPosition] = '\0';
 
@@ -119,6 +123,7 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 
 			buffer[0] = '\0';
 			bufferPosition = 0;
+			doubleQuotesCount = 0;
 		}
 		else
 		{
@@ -137,8 +142,11 @@ struct shl_Lines shl_split_line(struct shl_Line* line)
 				if (!buffer)
 					exit(-1);
 			}
+			
+			if (line->line[linePosition] == '\"')
+				doubleQuotesCount++;
 
-                        buffer[bufferPosition++] = line->line[linePosition];
+			buffer[bufferPosition++] = line->line[linePosition];
 		}
 	}
 
