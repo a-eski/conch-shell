@@ -14,6 +14,7 @@
 _Bool shl_is_delimiter(char ch);
 
 struct shl_Line shl_read_line(void);
+struct shl_Line shl_read_stream(void);
 _Bool shl_is_valid_line(struct shl_Line line);
 
 struct shl_Lines shl_split_line(struct shl_Line line);

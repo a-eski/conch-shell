@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <termios.h>
 
 #include "shl_types.h"
 #include "shl_cli.h"
@@ -100,7 +101,7 @@ uint_fast32_t shl_launch_process(struct shl_Lines args)
 		int exec_result = execvp(args.lines[0], args.lines);
 		if (exec_result == -1)
 			perror(RED "conch-shell: error when creating child process" RESET);
-		exit(EXIT_FAILURE);
+		return 0;
 	}
 	else if (pid < 0)
 	{
@@ -133,27 +134,55 @@ uint_fast32_t shl_execute_command(struct shl_Lines args)
 	return shl_launch_process(args);
 }
 
+static struct termios original_terminal;
+static struct termios terminal;
+
+void shl_terminal_reset(void)
+{
+	fflush(stdout);
+	tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal);
+}
+
+void shl_terminal_init(void)
+{
+	tcgetattr(STDIN_FILENO, &original_terminal);
+	terminal = original_terminal;
+	terminal.c_lflag &= ~(ICANON);
+	terminal.c_cc[VMIN] = 0;
+	terminal.c_cc[VTIME] = 0;
+	tcsetattr(STDIN_FILENO, TCSANOW, &terminal);
+
+	atexit(shl_terminal_reset);
+}
+
 int main (void)
 {
 	uint_fast32_t status = 1;
 	struct shl_Line line;
 	struct shl_Lines args;
 	struct shl_Directory directory;
-
+	char* getcwd_result = NULL;
+	
 	do {
-		getcwd(directory.path, sizeof(directory.path));
+		getcwd_result = getcwd(directory.path, sizeof(directory.path));
+		if (getcwd_result == NULL)
+			perror(RED "conch-shell: error when getting current directory" RESET);
 		printf(CYAN "%s" RESET GREEN "$ " RESET, directory.path);
 
 		line = shl_read_line();
 		if (!shl_is_valid_line(line))
 		{
+			printf(RED "Invalid line.\n" RESET);
 			continue;
 		}
-
+		#if shl_DEBUG
+			shl_debug_line(line);
+		#endif
+		
 		args = shl_split_line(line);
 		if (!shl_is_valid_args(args))
 		{
-			printf("Invalid arguments.\n");
+			printf(RED "Invalid arguments.\n" RESET);
 			continue;
 		}
 
