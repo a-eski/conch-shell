@@ -1,0 +1,13 @@
+--leak checking
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o shl
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o shl
+valgrind --leak-check=yes ./shl
+
+--profiling
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o shl
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o shl
+
+--debugging
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o shl
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o shl
+

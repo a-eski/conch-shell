@@ -1,0 +1,6 @@
+/* hotkey ascii definitions */
+#define SHL_UP_ARROW 72
+#define SHL_DOWN_ARROW 80
+#define SHL_LEFT_ARROW 75
+#define SHL_RIGHT_ARROW 77
+
