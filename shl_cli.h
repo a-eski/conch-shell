@@ -5,15 +5,16 @@
 
 #include "shl_types.h"
 
-#define SHL_BUFFER_SIZE 1024
+#define SHL_BUFFER_SIZE 4096
 #define SHL_MAX_BUFFER_SIZE 20480
+
 #define SHL_TOKEN_BUFFER_SIZE 64
 #define SHL_MAX_TOKEN_BUFFER_SIZE 1280
 #define SHL_LINES_SIZE 10
 
 _Bool shl_is_delimiter(char ch);
 
-struct shl_Line shl_read_line(void);
+struct shl_Line shl_line_read(void);
 struct shl_Line shl_read_stream(void);
 _Bool shl_is_valid_line(struct shl_Line line);
 
