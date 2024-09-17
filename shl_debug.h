@@ -3,11 +3,11 @@
 
 #include <stdio.h>
 
-#include "shl_types.h"
+#include "shl_cli.h"
 
 void shl_debug_line(struct shl_Line line);
-void shl_debug_args(struct shl_Lines args);
-void shl_debug_launch_process(struct shl_Lines args);
+void shl_debug_args(struct shl_Args args);
+void shl_debug_launch_process(struct shl_Args args);
 
 #endif // !shl_debug_h
 

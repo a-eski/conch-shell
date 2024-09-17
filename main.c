@@ -5,7 +5,6 @@
 #include <sys/wait.h>
 #include <termios.h>
 
-#include "shl_types.h"
 #include "shl_cli.h"
 #include "shl_string.h"
 #include "shl_output.h"
@@ -15,7 +14,7 @@
 	#include "shl_debug.h"
 #endif
 
-_Bool shl_is_exit_command(struct shl_Lines args)
+_Bool shl_is_exit_command(struct shl_Args args)
 {
 	if (shl_string_compare(args.lines[0], "q", args.maxLineSize) == 0)
 		return true;
@@ -27,7 +26,7 @@ _Bool shl_is_exit_command(struct shl_Lines args)
 	return false;
 }
 
-_Bool shl_is_echo_command(struct shl_Lines args)
+_Bool shl_is_echo_command(struct shl_Args args)
 {
 	if (shl_string_compare(args.lines[0], "echo", args.maxLineSize) == 0)
 		return true;
@@ -35,7 +34,7 @@ _Bool shl_is_echo_command(struct shl_Lines args)
 	return false;
 }
 
-uint_fast32_t shl_echo_command(struct shl_Lines args)
+uint_fast32_t shl_echo_command(struct shl_Args args)
 {
 	for (uint_fast32_t i = 1; i < args.count; i++)
 		printf("%s ", args.lines[i]);
@@ -46,7 +45,7 @@ uint_fast32_t shl_echo_command(struct shl_Lines args)
 	return 1;
 }
 
-_Bool shl_is_help_command(struct shl_Lines args)
+_Bool shl_is_help_command(struct shl_Args args)
 {
 	if (shl_string_compare(args.lines[0], "help", args.maxLineSize) == 0)
 		return true;
@@ -63,7 +62,7 @@ uint_fast32_t shl_help_command(void)
 	return 1;
 }
 
-_Bool shl_is_cd_command(struct shl_Lines args)
+_Bool shl_is_cd_command(struct shl_Args args)
 {
 	if (shl_string_compare(args.lines[0], "cd", args.maxLineSize) == 0)
 		return true;
@@ -71,7 +70,7 @@ _Bool shl_is_cd_command(struct shl_Lines args)
 	return false;
 }
 
-uint_fast32_t shl_cd_command(struct shl_Lines args)
+uint_fast32_t shl_cd_command(struct shl_Args args)
 {
 	if (args.lines[1] == NULL)
 	{
@@ -85,7 +84,7 @@ uint_fast32_t shl_cd_command(struct shl_Lines args)
 	return 1;
 }
 
-uint_fast32_t shl_launch_process(struct shl_Lines args)
+uint_fast32_t shl_launch_process(struct shl_Args args)
 {
 	#if shl_DEBUG
 		shl_debug_launch_process(args);
@@ -116,7 +115,7 @@ uint_fast32_t shl_launch_process(struct shl_Lines args)
 	return 1;
 }
 
-uint_fast32_t shl_execute_command(struct shl_Lines args)
+uint_fast32_t shl_execute_command(struct shl_Args args)
 {
 	if (shl_is_exit_command(args))
 		return 0;
@@ -156,7 +155,7 @@ int main (void)
 {
 	uint_fast32_t status = 1;
 	struct shl_Line line;
-	struct shl_Lines args;
+	struct shl_Args args;
 	struct shl_Directory directory;
 	char* getcwd_result = NULL;
 
@@ -173,9 +172,8 @@ int main (void)
 		printf(CYAN "%s" RESET GREEN "$ " RESET, directory.path);
 
 		line = shl_line_read();
-		if (!shl_is_valid_line(line))
+		if (!shl_line_is_valid(line))
 		{
-			printf(RED "Invalid line.\n" RESET);
 			free(line.line);
 			continue;
 		}
@@ -183,8 +181,8 @@ int main (void)
 			shl_debug_line(line);
 		#endif
 		
-		args = shl_split_line(line);
-		if (!shl_is_valid_args(args))
+		args = shl_line_split(line);
+		if (!shl_args_is_valid(args))
 		{
 			printf(RED "Invalid arguments.\n" RESET);
 			free(line.line);

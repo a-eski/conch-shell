@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "shl_debug.h"
-#include "shl_types.h"
+#include "shl_cli.h"
 
 void shl_debug_line(struct shl_Line line)
 {
@@ -10,7 +10,7 @@ void shl_debug_line(struct shl_Line line)
 	printf("line.length: %lu\n", line.length);
 }
 
-void shl_debug_args(struct shl_Lines args)
+void shl_debug_args(struct shl_Args args)
 {
 	printf("args.count: %lu\n", args.count);
 	printf("args.maxLineSize: %lu\n", args.maxLineSize);
@@ -18,7 +18,7 @@ void shl_debug_args(struct shl_Lines args)
 		printf("args[%lu] %s\n", i, *(args.lines + i));
 }
 
-void shl_debug_launch_process(struct shl_Lines args)
+void shl_debug_launch_process(struct shl_Args args)
 {
 	printf("args.count: %lu\n", args.count);
 	printf("args.maxLineSize: %lu\n", args.maxLineSize);
