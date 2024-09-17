@@ -160,7 +160,7 @@ int main (void)
 	struct shl_Directory directory;
 	char* getcwd_result = NULL;
 
-	//shl_terminal_init();
+	// shl_terminal_init();
 	
 	do {
 		getcwd_result = getcwd(directory.path, sizeof(directory.path));
@@ -176,6 +176,7 @@ int main (void)
 		if (!shl_is_valid_line(line))
 		{
 			printf(RED "Invalid line.\n" RESET);
+			free(line.line);
 			continue;
 		}
 		#if shl_DEBUG
@@ -186,6 +187,7 @@ int main (void)
 		if (!shl_is_valid_args(args))
 		{
 			printf(RED "Invalid arguments.\n" RESET);
+			free(line.line);
 			continue;
 		}
 
@@ -197,7 +199,7 @@ int main (void)
 		free(args.lines);
 	} while (status);
 
-	//shl_terminal_reset();
+	// shl_terminal_reset();
 
 	return EXIT_SUCCESS;
 }
