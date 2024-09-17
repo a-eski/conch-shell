@@ -1,4 +1,4 @@
-cc = gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined
+cc = gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3
 objects = main.o shl_cli.o shl_debug.o shl_string.o
 target = shl
 
