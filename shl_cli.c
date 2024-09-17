@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "shl_string.h"
 #include "shl_cli.h"
@@ -29,50 +30,6 @@ _Bool shl_is_delimiter(char ch)
 	}
 }
 
-struct shl_Line shl_read_line(void)
-{
-	uint_fast32_t bufferSize = SHL_BUFFER_SIZE;
-	uint_fast32_t position = 0;
-	char* buffer = malloc(sizeof(char) * bufferSize);
-	int character;
-
-	if (!buffer)
-		exit(-1);
-
-	while (1)
-	{
-		character = getchar();
-
-		/* If character is EOF or newline, replace with null terminator and return */
-		if (character == EOF || character == '\n')
-		{
-			buffer[position++] = '\0';
-			struct shl_Line line = { .length = position, .line = buffer };
-			return line;
-		}
-		else
-		{
-			buffer[position++] = character;
-		}
-
-		if (position > bufferSize)
-		{
-			bufferSize += SHL_BUFFER_SIZE;
-			if (bufferSize >= SHL_MAX_BUFFER_SIZE)
-			{	
-				free(buffer);
-				struct shl_Line emptyLine = { .length = 0, .line = NULL };
-				return emptyLine;
-			}
-
-			buffer = realloc(buffer, bufferSize);
-			if (!buffer)
-				exit(-1);
-		}
-
-	}
-}
-
 struct shl_Line shl_line_read(void)
 {
 	char buffer[SHL_BUFFER_SIZE];
@@ -84,7 +41,7 @@ struct shl_Line shl_line_read(void)
 		character = getchar();
 
 		/* If character is EOF or newline, replace with null terminator and return */
-		if (character == EOF || character == '\n')
+		if (character == EOF || character == '\n' || position == SHL_BUFFER_SIZE - 1)
 		{
 			buffer[position++] = '\0';
 			char* result = malloc(sizeof(char) * position);
@@ -99,32 +56,7 @@ struct shl_Line shl_line_read(void)
 	}
 }
 
-struct shl_Line shl_read_stream(void)
-{
-	uint_fast32_t bufferSize = SHL_BUFFER_SIZE;
-	char buffer[bufferSize];
-	uint_fast32_t position = 0;
-	int character;
-
-	while (1)
-	{
-		character = getchar();
-
-		/* If character is EOF or newline, replace with null terminator and return */
-		if (character == EOF || character == '\n')
-		{
-			buffer[position++] = '\0';
-			struct shl_Line line = { .length = position, .line = buffer };
-			return line;
-		}
-		else
-		{
-			buffer[position++] = character;
-		}
-	}
-}
-
-_Bool shl_is_valid_line(struct shl_Line line)
+_Bool shl_line_is_valid(struct shl_Line line)
 {
 	if (line.length == 1)
 		return false;
@@ -135,21 +67,19 @@ _Bool shl_is_valid_line(struct shl_Line line)
 	return true;
 }
 
-struct shl_Lines shl_split_line(struct shl_Line line)
+struct shl_Args shl_line_split(struct shl_Line line)
 {
-	if (!shl_is_valid_line(line))
+	if (!shl_line_is_valid(line))
 	{
-		struct shl_Lines emptyLines = { .count = 0, .lines = NULL };
+		struct shl_Args emptyLines = { .count = 0, .lines = NULL };
 		return emptyLines;
 	}
 
+	const uint_fast32_t bufferSize = SHL_TOKEN_BUFFER_SIZE;
+	char buffer[SHL_TOKEN_BUFFER_SIZE];
 	uint_fast32_t bufferPosition = 0;
-	uint_fast32_t bufferSize = SHL_TOKEN_BUFFER_SIZE;
-	char* buffer = malloc(sizeof(char) * bufferSize);
-	if (buffer == NULL)
-		exit(-1);
 
-	struct shl_Lines splitLines = { .count = 0, .lines = NULL };
+	struct shl_Args splitLines = { .count = 0, .lines = NULL };
 	splitLines.lines = malloc(sizeof(char*) * SHL_TOKEN_BUFFER_SIZE);
 	if (splitLines.lines == NULL)
 		exit(-1);
@@ -158,16 +88,17 @@ struct shl_Lines shl_split_line(struct shl_Line line)
 
 	for (uint_fast32_t linePosition = 0; linePosition < line.length + 1; linePosition++)
 	{
-		if (linePosition == line.length)
+		if (linePosition == line.length || bufferPosition == SHL_TOKEN_BUFFER_SIZE - 1)
 		{
 			splitLines.lines[splitLines.count] = NULL;
+			break;
 		}
 		else if (shl_is_delimiter(line.line[linePosition]) && (doubleQuotesCount == 0 || doubleQuotesCount == 2))
 		{
 			buffer[bufferPosition] = '\0';
 
 			splitLines.lines[splitLines.count] = malloc(sizeof(char) * bufferSize);
-			buffer = shl_string_copy(splitLines.lines[splitLines.count], buffer, bufferSize);
+			shl_string_copy(splitLines.lines[splitLines.count], buffer, bufferSize);
 			splitLines.count++;
 
 			if (splitLines.maxLineSize == 0 || bufferPosition > splitLines.maxLineSize)
@@ -179,22 +110,6 @@ struct shl_Lines shl_split_line(struct shl_Line line)
 		}
 		else
 		{
-			if (bufferPosition > bufferSize)
-			{
-				bufferSize += SHL_TOKEN_BUFFER_SIZE;
-				if (bufferSize >= SHL_MAX_TOKEN_BUFFER_SIZE)
-				{
-					free(buffer);
-					free(splitLines.lines);
-					struct shl_Lines emptyLines = { .count = 0, .lines = NULL };
-					return emptyLines;
-				}
-
-				buffer = realloc(buffer, bufferSize);
-				if (!buffer)
-					exit(-1);
-			}
-			
 			if (line.line[linePosition] == '\"')
 				doubleQuotesCount++;
 			else	
@@ -202,11 +117,10 @@ struct shl_Lines shl_split_line(struct shl_Line line)
 		}
 	}
 
-	free(buffer);
 	return splitLines;
 }
 
-_Bool shl_is_valid_args(struct shl_Lines args)
+_Bool shl_args_is_valid(struct shl_Args args)
 {
 	if (args.count == 0 || args.lines == NULL)
 		return 0;
