@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <termios.h>
 
@@ -151,8 +150,6 @@ void shl_terminal_init(void)
 	terminal.c_cc[VMIN] = 0;
 	terminal.c_cc[VTIME] = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &terminal);
-
-	atexit(shl_terminal_reset);
 }
 
 int main (void)
@@ -162,14 +159,20 @@ int main (void)
 	struct shl_Lines args;
 	struct shl_Directory directory;
 	char* getcwd_result = NULL;
+
+	//shl_terminal_init();
 	
 	do {
 		getcwd_result = getcwd(directory.path, sizeof(directory.path));
 		if (getcwd_result == NULL)
+		{
 			perror(RED "conch-shell: error when getting current directory" RESET);
+			status = 0;
+		}
+
 		printf(CYAN "%s" RESET GREEN "$ " RESET, directory.path);
 
-		line = shl_read_line();
+		line = shl_line_read();
 		if (!shl_is_valid_line(line))
 		{
 			printf(RED "Invalid line.\n" RESET);
@@ -193,6 +196,8 @@ int main (void)
 			free(args.lines[i]);
 		free(args.lines);
 	} while (status);
+
+	//shl_terminal_reset();
 
 	return EXIT_SUCCESS;
 }
