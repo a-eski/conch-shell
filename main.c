@@ -188,6 +188,9 @@ int main (void)
 		{
 			printf(RED "Invalid arguments.\n" RESET);
 			free(line.line);
+			for (uint_fast32_t i = 0; i < args.count; i++)
+				free(args.lines[i]);
+			free(args.lines);
 			continue;
 		}
 
