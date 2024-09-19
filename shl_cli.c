@@ -39,7 +39,7 @@ struct shl_Line shl_line_read(void)
 	while (1)
 	{
 		character = getchar();
-
+		
 		/* If character is EOF or newline, replace with null terminator and return */
 		if (character == EOF || character == '\n' || position == SHL_BUFFER_SIZE - 1)
 		{
@@ -69,55 +69,49 @@ _Bool shl_line_is_valid(struct shl_Line line)
 
 struct shl_Args shl_line_split(struct shl_Line line)
 {
-	if (!shl_line_is_valid(line))
-	{
-		struct shl_Args emptyLines = { .count = 0, .lines = NULL };
-		return emptyLines;
-	}
-
-	const uint_fast32_t bufferSize = SHL_TOKEN_BUFFER_SIZE;
+	const uint_fast32_t buffer_size = SHL_TOKEN_BUFFER_SIZE;
 	char buffer[SHL_TOKEN_BUFFER_SIZE];
-	uint_fast32_t bufferPosition = 0;
+	uint_fast32_t buffer_position = 0;
 
-	struct shl_Args splitLines = { .count = 0, .lines = NULL };
-	splitLines.lines = malloc(sizeof(char*) * SHL_TOKEN_BUFFER_SIZE);
-	if (splitLines.lines == NULL)
+	struct shl_Args args = { .count = 0, .lines = NULL };
+	args.lines = malloc(sizeof(char*) * SHL_TOKEN_BUFFER_SIZE);
+	if (args.lines == NULL)
 		exit(-1);
 
-	uint_fast32_t doubleQuotesCount = 0;
+	uint_fast32_t double_quotes_count = 0;
 
-	for (uint_fast32_t linePosition = 0; linePosition < line.length + 1; linePosition++)
+	for (uint_fast32_t line_position = 0; line_position < line.length + 1; line_position++)
 	{
-		if (linePosition == line.length || bufferPosition == SHL_TOKEN_BUFFER_SIZE - 1)
+		if (line_position == line.length || buffer_position == SHL_TOKEN_BUFFER_SIZE - 1)
 		{
-			splitLines.lines[splitLines.count] = NULL;
+			args.lines[args.count] = NULL;
 			break;
 		}
-		else if (shl_is_delimiter(line.line[linePosition]) && (doubleQuotesCount == 0 || doubleQuotesCount == 2))
+		else if (shl_is_delimiter(line.line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2))
 		{
-			buffer[bufferPosition] = '\0';
+			buffer[buffer_position] = '\0';
 
-			splitLines.lines[splitLines.count] = malloc(sizeof(char) * bufferSize);
-			shl_string_copy(splitLines.lines[splitLines.count], buffer, bufferSize);
-			splitLines.count++;
+			args.lines[args.count] = malloc(sizeof(char) * buffer_size);
+			shl_string_copy(args.lines[args.count], buffer, buffer_size);
+			args.count++;
 
-			if (splitLines.maxLineSize == 0 || bufferPosition > splitLines.maxLineSize)
-				splitLines.maxLineSize = bufferPosition;
+			if (args.maxLineSize == 0 || buffer_position > args.maxLineSize)
+				args.maxLineSize = buffer_position;
 
 			buffer[0] = '\0';
-			bufferPosition = 0;
-			doubleQuotesCount = 0;
+			buffer_position = 0;
+			double_quotes_count = 0;
 		}
 		else
 		{
-			if (line.line[linePosition] == '\"')
-				doubleQuotesCount++;
+			if (line.line[line_position] == '\"')
+				double_quotes_count++;
 			else	
-				buffer[bufferPosition++] = line.line[linePosition];
+				buffer[buffer_position++] = line.line[line_position];
 		}
 	}
 
-	return splitLines;
+	return args;
 }
 
 _Bool shl_args_is_valid(struct shl_Args args)

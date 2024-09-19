@@ -14,6 +14,10 @@
 	#include "shl_debug.h"
 #endif
 
+static char** history;
+static uint_fast32_t history_position = 0;
+static const uint_fast32_t max_history_position = 50;
+
 _Bool shl_is_exit_command(struct shl_Args args)
 {
 	if (shl_string_compare(args.lines[0], "q", args.maxLineSize) == 0)
@@ -84,6 +88,22 @@ uint_fast32_t shl_cd_command(struct shl_Args args)
 	return 1;
 }
 
+_Bool shl_is_history_command(struct shl_Args args)
+{
+	if (shl_string_compare(args.lines[0], "history", args.maxLineSize) == 0)
+		return true;
+	
+	return false;
+}
+
+uint_fast32_t shl_history_command()
+{
+	for (uint_fast32_t i = 0; i < history_position; i++) {
+		printf("%s\n", history[i]);
+	}
+	return 1;
+}
+
 uint_fast32_t shl_launch_process(struct shl_Args args)
 {
 	#if shl_DEBUG
@@ -129,6 +149,9 @@ uint_fast32_t shl_execute_command(struct shl_Args args)
 	if (shl_is_cd_command(args))
 		return shl_cd_command(args);
 
+	if (shl_is_history_command(args))
+		return shl_history_command();
+
 	return shl_launch_process(args);
 }
 
@@ -158,6 +181,8 @@ int main (void)
 	struct shl_Args args;
 	struct shl_Directory directory;
 	char* getcwd_result = NULL;
+	char* user = getenv("USER");
+	history = malloc(sizeof(char*) * max_history_position);
 
 	// shl_terminal_init();
 	
@@ -169,7 +194,7 @@ int main (void)
 			status = 0;
 		}
 
-		printf(CYAN "%s" RESET GREEN "$ " RESET, directory.path);
+		printf(GREEN "%s" WHITE ":" CYAN "%s" RESET "$ " , user, directory.path);
 
 		line = shl_line_read();
 		if (!shl_line_is_valid(line))
@@ -177,6 +202,8 @@ int main (void)
 			free(line.line);
 			continue;
 		}
+		history[history_position] = malloc(sizeof(char) * line.length);
+		shl_string_copy(history[history_position++], line.line, line.length);
 		#if shl_DEBUG
 			shl_debug_line(line);
 		#endif
