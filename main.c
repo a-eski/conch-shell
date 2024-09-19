@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <termios.h>
 
 #include "shl_cli.h"
 #include "shl_string.h"
@@ -155,25 +154,6 @@ uint_fast32_t shl_execute_command(struct shl_Args args)
 	return shl_launch_process(args);
 }
 
-static struct termios original_terminal;
-static struct termios terminal;
-
-void shl_terminal_reset(void)
-{
-	fflush(stdout);
-	tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal);
-}
-
-void shl_terminal_init(void)
-{
-	tcgetattr(STDIN_FILENO, &original_terminal);
-	terminal = original_terminal;
-	terminal.c_lflag &= ~(ICANON);
-	terminal.c_cc[VMIN] = 0;
-	terminal.c_cc[VTIME] = 0;
-	tcsetattr(STDIN_FILENO, TCSANOW, &terminal);
-}
-
 int main (void)
 {
 	uint_fast32_t status = 1;
@@ -184,8 +164,6 @@ int main (void)
 	char* user = getenv("USER");
 	history = malloc(sizeof(char*) * max_history_position);
 
-	// shl_terminal_init();
-	
 	do {
 		getcwd_result = getcwd(directory.path, sizeof(directory.path));
 		if (getcwd_result == NULL)
@@ -226,8 +204,6 @@ int main (void)
 			free(args.lines[i]);
 		free(args.lines);
 	} while (status);
-
-	// shl_terminal_reset();
 
 	return EXIT_SUCCESS;
 }
